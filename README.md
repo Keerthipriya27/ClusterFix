@@ -1,3 +1,11 @@
+---
+title: ClusterFix
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
 # OpenOps-RL: A Multi-Agent Reinforcement Learning Environment for Autonomous IT Incident Resolution
 
 An OpenEnv-compatible multi-agent simulator for IT operational tickets. Watch highly calibrated RL agents diagnose, propose, and safely execute runbooks across your infrastructure telemetry.
