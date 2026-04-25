@@ -20,7 +20,7 @@ from ticket_env import (
 
 # Runtime provider configuration (provider integration is optional).
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 GEMINI_API_BASE_URL = os.environ.get("GEMINI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
 GEMINI_BEARER_AUTH = os.environ.get("GEMINI_BEARER_AUTH", "false").lower() == "true"
 ENABLE_MODEL_ASSIST = os.environ.get("ENABLE_MODEL_ASSIST", "false").lower() == "true"
@@ -256,11 +256,11 @@ def build_provider_url_and_headers(api_key):
         url = f"{GEMINI_API_BASE_URL.rstrip('/')}/models/{GEMINI_MODEL}:generateContent"
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
+            "Authorization": f"Bearer {api_key.strip()}"
         }
         return url, headers
 
-    url = f"{GEMINI_API_BASE_URL.rstrip('/')}/models/{GEMINI_MODEL}:generateContent?key={api_key}"
+    url = f"{GEMINI_API_BASE_URL.rstrip('/')}/models/{GEMINI_MODEL}:generateContent?key={api_key.strip()}"
     headers = {"Content-Type": "application/json"}
     return url, headers
 
