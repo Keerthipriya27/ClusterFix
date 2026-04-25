@@ -1,0 +1,127 @@
+/* Custom Utility Classes & Animations */
+
+:root {
+  --neon-cyan: 34, 211, 238; /* #22d3ee */
+  --neon-violet: 167, 139, 250; /* #a78bfa */
+  --warm-orange: 255, 155, 90; /* #ff9b5a */
+}
+
+/* Enforce Times New Roman for professional look */
+body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea {
+  font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Backgrounds - Pure Black for standard theme */
+body {
+  background-color: #000000 !important;
+}
+
+.radial-bg {
+  background: radial-gradient(circle at 50% 50%, rgba(30, 30, 30, 1) 0%, rgba(0, 0, 0, 1) 100%);
+}
+
+.grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
+
+.glass-bg {
+  background: rgba(15, 23, 48, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Glows */
+.glow-cyan {
+  text-shadow: 0 0 10px rgba(var(--neon-cyan), 0.7), 0 0 20px rgba(var(--neon-cyan), 0.4);
+}
+.glow-violet {
+  text-shadow: 0 0 10px rgba(var(--neon-violet), 0.7), 0 0 20px rgba(var(--neon-violet), 0.4);
+}
+.glow-orange {
+  text-shadow: 0 0 10px rgba(var(--warm-orange), 0.7), 0 0 20px rgba(var(--warm-orange), 0.4);
+}
+
+/* Base Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--neon-cyan), 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--neon-cyan), 0.5);
+}
+
+/* Sample Buttons */
+.sample-btn {
+  @apply py-1.5 px-2 rounded-md bg-white/5 border border-white/10 text-[10px] text-gray-400 font-mono text-left truncate transition-colors duration-200 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-500/10 focus:outline-none;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Light Theme Overrides - Pure White */
+body.light-theme {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+body.light-theme .radial-bg {
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f0f0f0 100%) !important;
+}
+
+body.light-theme .grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px) !important;
+}
+
+body.light-theme .glass-bg {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+}
+
+body.light-theme textarea,
+body.light-theme input {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+
+body.light-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.light-theme .text-gray-300,
+body.light-theme .text-gray-400,
+body.light-theme .text-gray-500 {
+  color: #475569 !important;
+}
+
+body.light-theme .bg-black\/30,
+body.light-theme .bg-black\/40 {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-theme .text-white {
+  color: #0f172a !important;
+}

@@ -1,0 +1,74 @@
+name: autoopsenv-multi-agent-it-ticket-resolution
+description: >
+  OpenEnv-compatible Gym-style environment for IT ticket resolution where an agent
+  performs multi-step operational actions and receives rewards for diagnosis quality,
+  safe remediation, and efficiency.
+entry_point: ticket_env:TicketEnv
+version: 0.1.0
+framework: openenv
+
+observation_space:
+  type: object
+  properties:
+    ticket_description:
+      type: string
+      description: User reported problem statement.
+    logs:
+      type: string
+      description: Relevant log snippets or error traces.
+    system_context:
+      type: string
+      description: Infrastructure and service context.
+    step:
+      type: integer
+      description: Current step number in episode.
+    remaining_steps:
+      type: integer
+      description: Steps left before termination.
+    diagnosed:
+      type: boolean
+      description: Whether root-cause diagnosis has been made.
+    proposed_fix:
+      type: [string, 'null']
+      description: Candidate remediation suggested by agent.
+    ticket_category:
+      type: [string, 'null']
+      description: Optional category selected by dynamic router in multi-agent mode.
+    category_confidence:
+      type: number
+      description: Confidence score for selected ticket category in multi-agent mode.
+    category_scores:
+      type: object
+      description: Category score map from categorizer in multi-agent mode.
+    arbiter:
+      type: [object, 'null']
+      description: Optional multi-agent arbiter metadata with specialist decisions.
+
+action_space:
+  type: enum
+  values:
+    - analyze_logs
+    - search_knowledge_base
+    - ask_for_more_info
+    - propose_fix
+    - execute_fix
+  format:
+    string_or_object:
+      string_examples:
+        - analyze_logs
+      object_example:
+        action: propose_fix
+        content: restart_web_api_service
+
+termination:
+  conditions:
+    - issue_resolved
+    - max_steps_reached
+
+reward:
+  rules:
+    - "+20 for correct fix execution"
+    - "+10 for correct diagnosis"
+    - "+5 for efficient resolution"
+    - "-5 for wrong action"
+    - "-10 for harmful action"

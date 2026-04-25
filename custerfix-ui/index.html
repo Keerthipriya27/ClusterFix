@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClusterFix AI Incident Response Console</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for Post-Incident Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Tailwind CSS (via CDN with inline config) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            deepNavy: '#05070A',
+            neonCyan: '#22d3ee',
+            neonViolet: '#a78bfa',
+            warmOrange: '#ff9b5a',
+            glass: 'rgba(15, 23, 48, 0.6)',
+          },
+          fontFamily: {
+            display: ['"Space Grotesk"', 'sans-serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- ES Module Import Map for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body class="bg-deepNavy text-gray-200 font-body relative overflow-x-hidden overflow-y-auto min-h-screen w-full m-0 p-0">
+
+  <!-- Setup full-page radial gradient and subtle grid overlay via CSS -->
+  <div class="fixed inset-0 radial-bg z-[-2]"></div>
+  <div class="fixed inset-0 grid-bg z-[-1]"></div>
+
+  <div class="min-h-screen flex flex-col relative z-10 w-full overflow-visible p-4 lg:p-6 pb-10">
+    <!-- TOP BAR -->
+    <header class="flex flex-col gap-3 lg:flex-row lg:justify-between lg:items-center mb-4">
+      <div class="flex items-center gap-4">
+        <h1 class="font-display text-2xl font-bold tracking-[0.2em] text-neonCyan glow-cyan">CLUSTERFIX</h1>
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-neonCyan/30 bg-neonCyan/10">
+          <div class="w-2 h-2 rounded-full bg-neonCyan animate-pulse"></div>
+          <span class="text-xs font-mono font-bold text-neonCyan uppercase tracking-wider hidden sm:inline-block">System Online</span>
+        </div>
+        
+        <!-- Prominent Theme Toggle -->
+        <button id="theme-toggle" class="px-4 py-1.5 ml-2 rounded-lg border border-neonCyan/50 text-neonCyan hover:bg-neonCyan/10 transition-colors z-[100] font-mono text-xs uppercase tracking-wider flex items-center gap-2">
+          <svg id="theme-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <span id="theme-label">Switch Theme</span>
+        </button>
+      </div>
+      
+      <div class="flex items-center gap-3 mt-4 lg:mt-0">
+        <span class="font-mono text-sm uppercase text-gray-400">Cumulative Reward</span>
+        <div id="reward-total" class="font-display text-2xl font-bold text-neonViolet glow-violet">0</div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT (3D SCENE + RIGHT PANEL) -->
+    <div class="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+      
+      <!-- 3D SCENE CONTAINER -->
+      <div id="panel-3d" class="flex-1 rounded-xl border border-white/10 glass-bg relative overflow-hidden flex flex-col shadow-[0_0_40px_rgba(34,211,238,0.05)] min-h-[420px] lg:min-h-[68vh] lg:sticky lg:top-6 lg:self-start lg:h-[calc(100vh-8rem)]">
+        
+        <!-- Agent Labels overlay -->
+        <div class="absolute inset-0 pointer-events-none z-10 flex justify-center items-end pb-4 opacity-100">
+          <div class="w-full max-w-4xl px-4 grid grid-cols-5 gap-2">
+            <div class="text-center font-mono flex flex-col items-center">
+              <div class="text-neonCyan text-xs sm:text-sm tracking-widest font-bold mb-1">ANALYZER</div>
+              <div id="status-analyzer" class="text-[11px] sm:text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10 transition-colors duration-300">STANDBY</div>
+              <div id="task-analyzer" class="mt-2 text-xs sm:text-sm text-neonCyan h-10 leading-tight break-words opacity-0 transition-opacity"></div>
+            </div>
+            <div class="text-center font-mono flex flex-col items-center relative top-3">
+              <div class="text-fuchsia-400 text-xs sm:text-sm tracking-widest font-bold mb-1">SEARCHER</div>
+              <div id="status-searcher" class="text-[11px] sm:text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10 transition-colors duration-300">STANDBY</div>
+              <div id="task-searcher" class="mt-2 text-xs sm:text-sm text-fuchsia-400 h-10 leading-tight break-words opacity-0 transition-opacity"></div>
+            </div>
+            <div class="text-center font-mono flex flex-col items-center relative top-6">
+              <div class="text-neonViolet text-xs sm:text-sm tracking-widest font-bold mb-1">ORCHESTRATOR</div>
+              <div id="status-orchestrator" class="text-[11px] sm:text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10 transition-colors duration-300">STANDBY</div>
+              <div id="task-orchestrator" class="mt-2 text-xs sm:text-sm text-neonViolet h-10 leading-tight break-words opacity-0 transition-opacity"></div>
+            </div>
+            <div class="text-center font-mono flex flex-col items-center relative top-3">
+              <div class="text-[#5eead4] text-xs sm:text-sm tracking-widest font-bold mb-1">FIXER</div>
+              <div id="status-fixer" class="text-[11px] sm:text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10 transition-colors duration-300">STANDBY</div>
+              <div id="task-fixer" class="mt-2 text-xs sm:text-sm text-[#5eead4] h-10 leading-tight break-words opacity-0 transition-opacity"></div>
+            </div>
+            <div class="text-center font-mono flex flex-col items-center">
+              <div class="text-green-400 text-xs sm:text-sm tracking-widest font-bold mb-1">VERIFIER</div>
+              <div id="status-verifier" class="text-[11px] sm:text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10 transition-colors duration-300">STANDBY</div>
+              <div id="task-verifier" class="mt-2 text-xs sm:text-sm text-green-400 h-10 leading-tight break-words opacity-0 transition-opacity"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="absolute top-3 right-3 z-20 flex items-center gap-2">
+          <button id="scene-zoom-out" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-xs hover:text-white hover:border-neonCyan/50">-</button>
+          <div id="scene-zoom-level" class="px-2 py-1 rounded border border-white/10 bg-black/40 text-gray-400 font-mono text-[10px] uppercase tracking-wider">100%</div>
+          <button id="scene-zoom-in" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-xs hover:text-white hover:border-neonCyan/50">+</button>
+          <button id="scene-zoom-reset" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-[10px] uppercase tracking-wider hover:text-white hover:border-neonCyan/50">Reset</button>
+        </div>
+
+        <div id="canvas-container" class="absolute inset-0"></div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="w-full lg:w-[460px] flex flex-col gap-4 min-h-0">
+        
+        <!-- INTAKE CARD -->
+        <div id="panel-intake" class="glass-bg border border-white/10 rounded-xl p-5 flex flex-col gap-4 shadow-[0_0_30px_rgba(34,211,238,0.08)] overflow-visible relative">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-neonCyan/5 blur-3xl rounded-full pointer-events-none"></div>
+          
+          <h2 class="font-mono text-base text-neonCyan font-bold tracking-widest uppercase flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-neonCyan shadow-[0_0_8px_#22d3ee]"></div>
+            Diagnostic Telemetry
+          </h2>
+
+          <p class="font-mono text-[11px] leading-5 text-gray-400 border border-white/5 bg-black/20 rounded-lg p-3">
+            For simple tickets, share the issue and obvious symptoms. For complex incidents, include owner, environment, timestamps, blast radius, recent changes, dependencies, and anything already tried. If the ticket is large, you can paste long logs here and the page will scroll.
+          </p>
+          
+          <div class="flex flex-col gap-5 w-full mt-1">
+            
+            <!-- Topology -->
+            <div class="flex flex-col">
+              <label class="block font-mono text-[12px] text-gray-500 uppercase tracking-widest mb-2 flex justify-between">
+                <span>System Context / Topology</span>
+                <span class="text-fuchsia-500/50">Optional</span>
+              </label>
+              <textarea id="project-context" class="w-full min-h-[120px] bg-black/40 border border-white/10 rounded-md p-4 font-mono text-sm text-gray-300 focus:outline-none focus:border-neonViolet/50 transition-colors resize-y placeholder-gray-700 shadow-inner" placeholder="Architecture or service map, owner team, cloud region, release version, dependencies, and any known constraints. Example: EKS cluster with checkout, auth, and payment services; Postgres primary-replica; deploy ran 10 minutes ago."></textarea>
+            </div>
+            
+            <!-- Raw Logs Stacked -->
+            <div class="flex flex-col h-full">
+              <label class="block font-mono text-[12px] text-gray-500 uppercase tracking-widest mb-2 flex justify-between">
+                <span>Raw Logs</span>
+                <span class="text-cyan-500/50">[syslog]</span>
+              </label>
+              <textarea id="incident-logs" class="w-full flex-1 min-h-[180px] bg-black/40 border border-white/10 rounded-md p-4 font-mono text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-y placeholder-gray-700 shadow-inner" placeholder="Paste relevant logs, traces, stack traces, and repeated error lines. Include timestamps if available. If the incident is noisy, the page will scroll and you can paste multiple blocks of logs."></textarea>
+            </div>
+
+            <!-- Metrics Stacked -->
+            <div class="flex flex-col h-full">
+              <label class="block font-mono text-[12px] text-gray-500 uppercase tracking-widest mb-2 flex justify-between">
+                <span>Metrics Data</span>
+                <span class="text-orange-400/50">[prom]</span>
+              </label>
+              <textarea id="incident-metrics" class="w-full flex-1 min-h-[180px] bg-black/40 border border-white/10 rounded-md p-4 font-mono text-sm text-gray-300 focus:outline-none focus:border-orange-500/50 transition-colors resize-y placeholder-gray-700 shadow-inner" placeholder="Add the metrics that best show impact: CPU, memory, latency, saturation, error rate, throughput, queue depth, pod restarts, or anomaly spikes. Paste longer metric snapshots if the issue is complex."></textarea>
+            </div>
+            
+            <!-- Incident description -->
+            <div class="mt-2">
+              <label class="block font-mono text-[12px] text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span class="text-red-500 animate-pulse">●</span> User Ticket Requirement <span class="text-red-500">*</span>
+              </label>
+              <textarea id="incident-input" class="w-full min-h-[180px] bg-[#0a0d14] border border-[#22d3ee]/30 rounded-lg p-5 font-mono text-base text-gray-100 focus:outline-none focus:border-neonCyan transition-all duration-300 resize-y placeholder-gray-500 shadow-[inset_0_0_15px_rgba(34,211,238,0.05)]" placeholder="Describe the ticket in plain language: what failed, who is affected, when it started, how often it happens, what changed recently, and what outcome you need. For complex cases, add any missing clues or escalation requirements here."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-mono leading-5 text-gray-400">
+              <div class="rounded-lg border border-white/5 bg-black/20 p-3">
+                <span class="block text-neonCyan uppercase tracking-widest mb-1">If the ticket is simple</span>
+                Add the issue, one or two symptoms, and the expected fix outcome.
+              </div>
+              <div class="rounded-lg border border-white/5 bg-black/20 p-3">
+                <span class="block text-neonViolet uppercase tracking-widest mb-1">If the ticket is complex</span>
+                Include topology, logs, metrics, timestamps, recent deploys, dependencies, ownership, and anything already checked.
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex flex-col gap-3 mt-2 w-full">
+            <div class="grid grid-cols-3 gap-3">
+              <button onclick="fillSmartScenario('db_crash')" class="sample-btn text-center text-xs py-2.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10">⚡ DB Crash</button>
+              <button onclick="fillSmartScenario('memory_leak')" class="sample-btn text-center text-xs py-2.5 border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500/10">⚡ OOM Leak</button>
+              <button onclick="fillSmartScenario('network_timeout')" class="sample-btn text-center text-xs py-2.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">⚡ Network</button>
+            </div>
+
+            <button id="dispatch-btn" class="w-full py-4 rounded-lg border border-neonCyan text-neonCyan hover:bg-neonCyan text-base hover:text-black font-display font-bold tracking-[0.2em] uppercase transition-all duration-300 shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:shadow-[0_0_35px_rgba(34,211,238,0.6)] relative overflow-hidden group">
+              <span class="relative z-10" id="dispatch-text">Execute Analysis</span>
+              <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- STATUS CARD -->
+        <div id="panel-status" class="glass-bg border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h2 class="font-mono text-xs text-gray-400 font-bold tracking-widest uppercase">Current Phase</h2>
+            <div class="flex items-center gap-1.5" id="agent-badges">
+              <span id="badge-0" class="w-2 h-2 rounded-full border border-white/30 bg-black/50 transition-colors"></span>
+              <span id="badge-1" class="w-2 h-2 rounded-full border border-white/30 bg-black/50 transition-colors"></span>
+              <span id="badge-2" class="w-2 h-2 rounded-full border border-white/30 bg-black/50 transition-colors"></span>
+              <span id="badge-3" class="w-2 h-2 rounded-full border border-white/30 bg-black/50 transition-colors"></span>
+              <span id="badge-4" class="w-2 h-2 rounded-full border border-white/30 bg-black/50 transition-colors"></span>
+            </div>
+          </div>
+          
+          <div class="flex items-end justify-between border-b border-white/10 pb-3">
+            <div id="current-phase-display" class="font-display text-2xl text-white font-bold tracking-wider uppercase">IDLE</div>
+            <div class="text-right">
+              <div class="font-mono text-[10px] text-gray-500 uppercase">Phase Reward</div>
+              <div id="phase-reward" class="font-mono font-bold text-neonViolet">+0</div>
+            </div>
+          </div>
+
+          <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-1 relative">
+            <div id="progress-bar" class="absolute left-0 top-0 bottom-0 w-0 bg-neonCyan transition-all duration-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
+          </div>
+        </div>
+
+        <!-- ACTION LOG -->
+        <div id="panel-log" class="flex-1 glass-bg border border-white/10 rounded-xl p-0 flex flex-col min-h-0 overflow-hidden relative">
+          <div class="p-3 border-b border-white/10 flex justify-between items-center bg-black/20">
+            <h2 class="font-mono text-xs text-gray-400 font-bold tracking-widest uppercase">Live Terminal</h2>
+            <div class="w-1.5 h-1.5 rounded-full bg-neonViolet animate-pulse"></div>
+          </div>
+          <div id="action-log" class="flex-1 overflow-y-auto p-4 font-mono text-xs leading-5 flex flex-col gap-1.5 text-gray-400">
+            <div><span class="text-gray-600">[SYSTEM]</span> Ready. Waiting for dispatch.</div>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM TICKER -->
+    <div class="mt-4 pt-2 border-t border-white/10 flex overflow-hidden">
+      <div class="whitespace-nowrap font-mono text-[10px] text-gray-500 uppercase tracking-widest animate-marquee inline-block pt-1">
+        <span class="px-8">[HISTORY] RECENT DISPATCHES:</span>
+        <span class="px-8 text-white/40">TKT-8991: RESOLVED (Network Timeout) • +4</span>
+        <span class="px-8 text-white/40">TKT-8992: RESOLVED (Memory OOM) • +10</span>
+        <span class="px-8 text-white/40">TKT-8993: RESOLVED (Server Down) • +8</span>
+        <span class="px-8 text-white/40">TKT-8994: FAILED (Config Reload) • -5</span>
+        <span class="px-8 text-neonCyan">AWAITING NEXT INCIDENT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolution Graph Modal -->
+  <div id="report-modal" class="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500 overflow-y-auto">
+    <div id="modal-content" class="w-full max-w-4xl bg-[#090e17] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(167,139,250,0.15)] flex flex-col overflow-hidden transform scale-95 transition-transform duration-500 relative my-4 max-h-[92vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-[#090e17] to-[#12192b]">
+        <div>
+          <h2 class="font-display font-bold text-2xl text-white tracking-widest mb-1">SIMULATION REPORT</h2>
+          <p class="font-mono text-xs text-gray-500">RAG Output & Resource Utilization Analysis</p>
+        </div>
+          <div class="text-right">
+            <div id="modal-status" class="text-neonCyan border border-neonCyan/30 bg-neonCyan/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest glow-cyan">RESOLVED</div>
+          </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto">
+        <!-- Stats & AI Summary -->
+        <div class="col-span-1 flex flex-col gap-4">
+          <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+            <h3 class="font-mono text-xs text-gray-500 mb-2">FINAL REWARD</h3>
+            <div id="modal-reward" class="text-4xl font-display font-bold text-neonViolet glow-violet">+0</div>
+          </div>
+          <div class="flex-1 bg-black/40 p-4 rounded-xl border border-white/5 overflow-hidden flex flex-col">
+            <h3 class="font-mono text-xs text-gray-500 mb-2">DIAGNOSTIC RESOLUTION TICKET</h3>
+            <div id="modal-insights" class="grid grid-cols-2 gap-2 mb-3">
+              <div class="rounded border border-red-400/30 bg-red-500/10 px-2 py-1.5">
+                <div class="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Severity</div>
+                <div id="insight-severity" class="text-xs font-mono font-bold text-red-300 uppercase">Unknown</div>
+              </div>
+              <div class="rounded border border-neonViolet/30 bg-neonViolet/10 px-2 py-1.5">
+                <div class="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Category</div>
+                <div id="insight-category" class="text-xs font-mono font-bold text-neonViolet uppercase">General</div>
+              </div>
+              <div class="rounded border border-neonCyan/30 bg-neonCyan/10 px-2 py-1.5 col-span-2">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Confidence Score</span>
+                  <span id="insight-confidence" class="text-[10px] font-mono font-bold text-neonCyan">0%</span>
+                </div>
+                <div class="w-full h-1.5 bg-white/10 rounded overflow-hidden">
+                  <div id="insight-confidence-bar" class="h-full bg-neonCyan shadow-[0_0_8px_rgba(34,211,238,0.7)]" style="width: 0%;"></div>
+                </div>
+              </div>
+
+            </div>
+            <div id="modal-rag-summary" class="font-mono text-[11px] text-[#e2e8f0] leading-relaxed overflow-y-auto pr-2">
+              <div class="rounded border border-white/10 bg-black/30 p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <div id="report-section-step" class="text-[10px] text-gray-400 uppercase tracking-widest">Section 1 of 4</div>
+                  <div id="report-section-dots" class="flex items-center gap-1.5"></div>
+                </div>
+                <div id="report-section-title" class="text-neonCyan text-xs uppercase tracking-widest font-bold mb-2">Root Cause</div>
+                <div id="report-section-body" class="text-gray-200 leading-6 min-h-[120px]">Waiting for RCA execution output...</div>
+                <div class="mt-3 pt-2 border-t border-white/10 flex items-center justify-between gap-3">
+                  <button id="report-section-prev" class="px-3 py-1.5 rounded border border-white/20 text-gray-300 hover:text-white hover:border-neonViolet/50 transition-colors text-[10px] uppercase tracking-widest">Previous</button>
+                  <button id="report-section-next" class="px-3 py-1.5 rounded border border-neonCyan/40 text-neonCyan hover:text-white hover:border-neonCyan transition-colors text-[10px] uppercase tracking-widest">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Graph -->
+        <div class="col-span-2 bg-black/40 p-4 rounded-xl border border-white/5 flex flex-col min-h-0">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <h3 class="font-mono text-xs text-gray-500">SYSTEM RESOURCES OVER TIMELINE</h3>
+            <div class="flex items-center gap-2">
+              <button id="chart-zoom-out" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-xs hover:text-white hover:border-neonCyan/50">-</button>
+              <div id="chart-zoom-level" class="px-2 py-1 rounded border border-white/10 bg-black/40 text-gray-400 font-mono text-[10px] uppercase tracking-wider">100%</div>
+              <button id="chart-zoom-in" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-xs hover:text-white hover:border-neonCyan/50">+</button>
+              <button id="chart-zoom-reset" class="px-2 py-1 rounded border border-white/20 bg-black/40 text-gray-300 font-mono text-[10px] uppercase tracking-wider hover:text-white hover:border-neonCyan/50">Reset</button>
+            </div>
+          </div>
+          <div id="resolution-chart-scroll" class="flex-1 min-h-[250px] overflow-auto rounded-lg border border-white/5 bg-[#060a12]/70">
+            <div id="resolution-chart-stage" class="relative min-h-[280px] min-w-[640px] w-full">
+              <canvas id="resolutionChart" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+          </div>
+          <p class="font-mono text-[10px] text-gray-500 mt-3">Tip: use +/- to zoom the graph and scroll to inspect details.</p>
+        </div>
+      </div>
+
+      <!-- Close Action -->
+      <div class="p-4 border-t border-white/10 text-center">
+        <button onclick="closeModal()" class="px-8 py-2 rounded border border-white/20 text-gray-400 hover:text-white hover:bg-white/10 font-mono text-sm tracking-widest transition-colors">ACKNOWLEDGE</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

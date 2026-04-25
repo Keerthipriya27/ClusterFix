@@ -1,0 +1,2 @@
+timestamp,source_mode,requested_count,processed_count,solved_count,rejected_count,avg_reward,success_rate,strategy,routing
+2026-04-25T11:35:35.763348+00:00,Live Queue (File),2,2,0,0,-9.0,0.0,RPG Squad (Consensus),Rules Only
