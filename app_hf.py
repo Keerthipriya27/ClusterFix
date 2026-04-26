@@ -1,11 +1,17 @@
 """HF Spaces entry point - directly runs the Flask backend."""
 import sys
+import importlib.machinery
+import importlib.util
 from pathlib import Path
 
-# Ensure custerfix-ui is importable
-sys.path.insert(0, str(Path(__file__).parent))
+# Load server.py as a module directly
+server_path = Path(__file__).parent / 'custerfix-ui' / 'server.py'
+loader = importlib.machinery.SourceFileLoader('server_module', str(server_path))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+server = importlib.util.module_from_spec(spec)
+loader.exec_module(server)
 
-from custerfix_ui.server import app
+app = server.app
 
 if __name__ == '__main__':
     import os
