@@ -245,6 +245,12 @@ if __name__ == '__main__':
     total_reward = int(round(analyze_reward + plan_reward + final_reward))
     chart = build_category_chart(category, severity)
 
+    tee_result = generate_remediation_script(expected_fix)
+    if not tee_result["passed"]:
+        steps[-1]["text"] = "TEE Sandbox rejected payload! Unauthorized system commands intercepted."
+        steps[-1]["reward"] = -50
+        total_reward -= 50
+
     return {
         "summary": summary,
         "steps": steps,
@@ -259,8 +265,7 @@ if __name__ == '__main__':
         "selected_action": arbiter_action,
         "selected_color": category_meta["hex"],
         "env_state": final_state,
-        "env_state": final_state,
-        "tee_verification": generate_remediation_script(expected_fix)
+        "tee_verification": tee_result
     }
 
 

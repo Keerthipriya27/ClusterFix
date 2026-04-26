@@ -244,8 +244,12 @@ function logEvent(agentIndex, message, rewardDelta) {
   else if (agentIndex === 4) agentTag = `<span class="text-green-400 font-bold">[VERIFIER]</span>`;
 
   let rewardHtml = '';
-  if (rewardDelta > 0) {
-    rewardHtml = `<span class="text-neonViolet font-bold ml-2">(+${rewardDelta})</span>`;
+  if (rewardDelta !== undefined && rewardDelta !== 0) {
+    if (rewardDelta > 0) {
+      rewardHtml = `<span class="text-neonViolet font-bold ml-2">(+${rewardDelta})</span>`;
+    } else {
+      rewardHtml = `<span class="text-red-500 font-bold ml-2">(${rewardDelta})</span>`;
+    }
     totalReward += rewardDelta;
     animateRewardUpdate(totalReward);
   }
@@ -261,6 +265,13 @@ function animateRewardUpdate(newTotal) {
   const el = document.getElementById('reward-total');
   el.innerText = newTotal;
   el.classList.add('scale-125');
+  if (newTotal < 0) {
+    el.classList.add('text-red-500', 'glow-none');
+    el.classList.remove('text-neonViolet', 'glow-violet');
+  } else {
+    el.classList.remove('text-red-500', 'glow-none');
+    el.classList.add('text-neonViolet', 'glow-violet');
+  }
   setTimeout(()=> el.classList.remove('scale-125'), 300);
 }
 
@@ -272,8 +283,15 @@ function updateUIStatus(phase, agentIndex, reward) {
   
   // Update phase reward display
   const rwEl = document.getElementById('phase-reward');
-  rwEl.innerText = reward > 0 ? `+${reward}` : `0`;
+  if (reward > 0) rwEl.innerText = `+${reward}`;
+  else if (reward < 0) rwEl.innerText = `${reward}`;
+  else rwEl.innerText = `0`;
   
+  if (reward < 0) {
+    rwEl.classList.replace('text-neonViolet', 'text-red-500');
+  } else {
+    rwEl.classList.replace('text-red-500', 'text-neonViolet');
+  }
   // Sub-title labels on the 3D scene
   const ids = ['status-analyzer', 'status-searcher', 'status-orchestrator', 'status-fixer', 'status-verifier'];
   for (let i=0; i<5; i++) {
