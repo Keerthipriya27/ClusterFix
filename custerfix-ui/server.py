@@ -946,8 +946,11 @@ Adjust response strictly based on given data.
     return jsonify(dynamic_payload)
 
 # Alias endpoints for Hugging Face Spaces proxy routing and unexpected path prefixes.
-app.add_url_rule('/solve', endpoint='solve_alias', view_func=solve_ticket, methods=['POST'])
+# Support all common request paths from HF Spaces frontend
+app.add_url_rule('/solve', endpoint='solve_alias_1', view_func=solve_ticket, methods=['POST'])
 app.add_url_rule('/proxy/7860/api/solve', endpoint='solve_proxy', view_func=solve_ticket, methods=['POST'])
+app.add_url_rule('/+/api/solve', endpoint='solve_plus_proxy', view_func=solve_ticket, methods=['POST'])
+app.add_url_rule('/api/solve', endpoint='solve_main', view_func=solve_ticket, methods=['POST'])
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", "7860"))

@@ -12,5 +12,5 @@ COPY . .
 # Expose Space port
 EXPOSE 7860
 
-# Run Flask server
-CMD ["python", "custerfix-ui/server.py"]
+# Run Flask server through HF-compatible entry point
+CMD ["python", "app_hf.py"]
