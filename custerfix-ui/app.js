@@ -471,7 +471,7 @@ function renderSectionContent(lines) {
     }
 
     if (inCode) {
-      html += escapeHtml(line) + '\\n';
+      html += escapeHtml(line) + '\n';
       continue;
     }
     
@@ -640,7 +640,17 @@ function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError
 
   const insights = parseSummaryInsights(summary);
 
-  document.getElementById('modal-reward').innerText = "+" + rw;
+  const rewardEl = document.getElementById('modal-reward');
+  rewardEl.innerText = (rw > 0 ? "+" : "") + rw;
+  
+  if (rw < 0) {
+     rewardEl.classList.replace('text-neonViolet', 'text-red-500');
+     rewardEl.classList.replace('glow-violet', 'glow-none');
+  } else {
+     rewardEl.classList.replace('text-red-500', 'text-neonViolet');
+     rewardEl.classList.replace('glow-none', 'glow-violet');
+  }
+
   bindReportSectionControls();
   reportSections = parseSummarySections(summary || "RCA Report Generation successful.");
   if (meta && meta.tee_verification) {
