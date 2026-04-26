@@ -16,6 +16,6 @@ app = server.app
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", "7860"))
-    print(f"🚀 Starting ClusterFix Backend on port {port}...")
-    print("✅ API endpoints ready: /api/solve, /solve, /api/health, /api/metrics")
+    print(f"Starting ClusterFix Backend on port {port}...")
+    print("API endpoints ready: /api/solve, /solve, /api/health, /api/metrics")
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
