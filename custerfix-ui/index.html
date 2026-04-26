@@ -193,10 +193,11 @@
           </div>
           
           <div class="flex flex-col gap-3 mt-2 w-full">
-            <div class="grid grid-cols-3 gap-3">
-              <button onclick="fillSmartScenario('db_crash')" class="sample-btn text-center text-xs py-2.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10">⚡ DB Crash</button>
-              <button onclick="fillSmartScenario('memory_leak')" class="sample-btn text-center text-xs py-2.5 border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500/10">⚡ OOM Leak</button>
-              <button onclick="fillSmartScenario('network_timeout')" class="sample-btn text-center text-xs py-2.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">⚡ Network</button>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              <button onclick="fillSmartScenario('db_crash')" class="sample-btn text-center text-[11px] px-1 py-2.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 border rounded">⚡ DB Crash</button>
+              <button onclick="fillSmartScenario('memory_leak')" class="sample-btn text-center text-[11px] px-1 py-2.5 border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500/10 border rounded">⚡ OOM Leak</button>
+              <button onclick="fillSmartScenario('network_timeout')" class="sample-btn text-center text-[11px] px-1 py-2.5 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 border rounded">⚡ Network</button>
+              <button onclick="fillSmartScenario('rogue_ai')" class="sample-btn text-center text-[11px] px-1 py-2.5 border-red-500/30 text-red-500 hover:bg-red-500/10 border rounded">⚡ Rogue AI</button>
             </div>
 
             <button id="dispatch-btn" class="w-full py-4 rounded-lg border border-neonCyan text-neonCyan hover:bg-neonCyan text-base hover:text-black font-display font-bold tracking-[0.2em] uppercase transition-all duration-300 shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:shadow-[0_0_35px_rgba(34,211,238,0.6)] relative overflow-hidden group">
