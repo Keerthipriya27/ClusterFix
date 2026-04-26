@@ -5,3 +5,9 @@ torch
 matplotlib
 flask
 requests
+pyyaml
+accelerate
+datasets
+transformers
+trl
+pytest

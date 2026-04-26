@@ -115,13 +115,14 @@ Confidence Score:
 90%`,
     steps: [
       { phase: "intake", agent: 0, text: "Ingesting incident payload in fallback mode...", duration: 1200, reward: 0 },
-      { phase: "analyze", agent: 1, text: "Transport issue detected. Running resilient analysis mode...", duration: 1500, reward: 3 },
-      { phase: "plan", agent: 2, text: "Compiling API/provider validation report...", duration: 1600, reward: 7 },
+      { phase: "analyze", agent: 1, text: "Transport issue detected. Running resilient analysis mode...", duration: 1500, reward: 0 },
+      { phase: "plan", agent: 2, text: "Compiling API/provider validation report...", duration: 1600, reward: 0 },
       { phase: "fix", agent: 3, text: "Building retry guidance and endpoint checklist...", duration: 1500, reward: 0 },
-      { phase: "verify", agent: 4, text: "Validation complete. Operator action required.", duration: 1200, reward: 9 }
+      { phase: "verify", agent: 4, text: "Validation complete. Operator action required.", duration: 1200, reward: 0 }
     ],
     chart: { cpu: [60, 58, 50, 40, 32, 22], error: [100, 96, 85, 55, 20, 5] },
-    status: "api_error",
+    status: "fallback",
+    request_id: null,
     api_error: {
       provider: "frontend",
       status_code: 0,
@@ -159,7 +160,7 @@ if (fileUpload) {
   fileUpload.addEventListener('change', async (e) => {
     const files = e.target.files;
     const ctxBox = document.getElementById('project-context');
-    let newText = "\n--- Mapped Project Files (MCP Context) ---\n";
+    let newText = "\n--- Mapped Project Files (Project Context) ---\n";
     for (let file of files) {
       if (file.type.startsWith("image")) continue;
       const text = await file.text();
@@ -205,6 +206,7 @@ document.getElementById('dispatch-btn').addEventListener('click', async () => {
         const data = await res.json();
         if (data.error) {
           payload = buildClientApiErrorPayload("Backend validation error", data.error);
+          payload.request_id = data.request_id || null;
         } else {
           payload = data;
         }
@@ -212,8 +214,14 @@ document.getElementById('dispatch-btn').addEventListener('click', async () => {
         payload = buildClientApiErrorPayload("Failed to parse JSON response", String(err));
       }
     } else {
-      let errText = await res.text();
-      payload = buildClientApiErrorPayload("Server responded with an error", errText || "No body returned.");
+      const raw = await res.text();
+      try {
+        const errData = JSON.parse(raw);
+        payload = buildClientApiErrorPayload("Server responded with an error", errData.error || "Unknown backend error");
+        payload.request_id = errData.request_id || null;
+      } catch (err) {
+        payload = buildClientApiErrorPayload("Server responded with an error", raw || "No body returned.");
+      }
     }
   } catch (e) {
     console.error(e);
@@ -229,6 +237,7 @@ document.getElementById('dispatch-btn').addEventListener('click', async () => {
       apiError: payload.api_error || null,
       category: payload.category || "general",
       confidence: typeof payload.confidence === 'number' ? payload.confidence : null,
+      requestId: payload.request_id || null,
       tee_verification: payload.tee_verification || null
     }
   );
@@ -385,8 +394,30 @@ function parseSummaryInsights(summary) {
 function parseSummarySections(summary) {
   const preferredOrder = ['root cause', 'issue summary', 'impact', 'recommended fix'];
   const ignored = new Set(['severity', 'confidence score', 'automation possibility', 'category']);
+  const aliasMap = new Map([
+    ['problem statement', 'root cause'],
+    ['problems', 'issue summary'],
+    ['problem', 'issue summary'],
+    ['solution', 'recommended fix'],
+    ['recommended solution', 'recommended fix'],
+    ['fix', 'recommended fix'],
+    ['root cause', 'root cause'],
+    ['issue summary', 'issue summary'],
+    ['impact', 'impact'],
+    ['recommended fix', 'recommended fix'],
+  ]);
   const sectionMap = new Map();
   let current = '';
+
+  function normalizeHeading(value) {
+    return String(value || '')
+      .replace(/^#{1,6}\s*/, '')
+      .replace(/^\*\*(.+)\*\*$/, '$1')
+      .replace(/^\[(.+)\]$/, '$1')
+      .replace(/^\d+[.)]\s*/, '')
+      .trim()
+      .toLowerCase();
+  }
 
   for (const rawLine of String(summary || '').split('\n')) {
     const line = rawLine.trim();
@@ -394,33 +425,33 @@ function parseSummarySections(summary) {
       continue;
     }
 
-    const titleOnly = line.match(/^([A-Za-z ]+):$/);
-    const inlineTitle = line.match(/^([A-Za-z ]+):\s+(.+)$/);
+    const titleOnly = line.match(/^(.+?):$/);
+    const inlineTitle = line.match(/^(.+?):\s+(.+)$/);
 
     if (titleOnly) {
-      const title = titleOnly[1].trim();
-      const key = title.toLowerCase();
+      const rawTitle = titleOnly[1].trim();
+      const key = aliasMap.get(normalizeHeading(rawTitle)) || normalizeHeading(rawTitle);
       if (ignored.has(key)) {
         current = '';
         continue;
       }
       current = key;
       if (!sectionMap.has(key)) {
-        sectionMap.set(key, { title, lines: [] });
+        sectionMap.set(key, { title: rawTitle.replace(/^\*\*|\*\*$/g, '').replace(/^#{1,6}\s*/, '').trim(), lines: [] });
       }
       continue;
     }
 
     if (inlineTitle) {
-      const title = inlineTitle[1].trim();
-      const key = title.toLowerCase();
+      const rawTitle = inlineTitle[1].trim();
+      const key = aliasMap.get(normalizeHeading(rawTitle)) || normalizeHeading(rawTitle);
       if (ignored.has(key)) {
         current = '';
         continue;
       }
       current = key;
       if (!sectionMap.has(key)) {
-        sectionMap.set(key, { title, lines: [] });
+        sectionMap.set(key, { title: rawTitle.replace(/^\*\*|\*\*$/g, '').replace(/^#{1,6}\s*/, '').trim(), lines: [] });
       }
       sectionMap.get(key).lines.push(inlineTitle[2].trim());
       continue;
@@ -493,7 +524,7 @@ function renderSectionContent(lines) {
   if (inList) html += '</ul>';
   if (inCode) html += '</code></pre>';
 
-  return html || '<p class="text-gray-300">No details available.</p>';
+  return html || '<p class="text-gray-300">Analysis details will appear here after the report is generated.</p>';
 }
 
 function renderReportSection() {
@@ -626,7 +657,7 @@ async function startSimulation(playbookSteps, summary, chartData, meta = { statu
 }
 
 let resChart;
-function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError: null }) {
+function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError: null, requestId: null }) {
   goToPage(3);
   const modal = document.getElementById('report-modal');
   const content = document.getElementById('modal-content');
@@ -653,21 +684,6 @@ function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError
 
   bindReportSectionControls();
   reportSections = parseSummarySections(summary || "RCA Report Generation successful.");
-  if (meta && meta.tee_verification) {
-    const tee = meta.tee_verification;
-    const badge = tee.passed ? "🟢 TEE AST Validation Passed" : "🔴 TEE AST Validation Failed";
-    reportSections.push({
-      title: "Executable Sandbox Runbook",
-      lines: [
-        `**Security Status**: ${badge}`,
-        `**SHA-256 Signature**: \`${tee.signature}\``,
-        "",
-        "```python",
-        ...tee.code.split('\n'),
-        "```"
-      ]
-    });
-  }
   reportSectionIndex = 0;
   renderReportSection();
   if (severityEl) {
@@ -694,14 +710,16 @@ function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError
     confidenceBarEl.style.width = `${clamp(resolvedConfidence, 0, 100)}%`;
   }
 
-  if (meta.status === "api_error") {
-    statusEl.innerText = "API KEY ERROR";
+  const requestTag = meta.requestId ? ` · ${String(meta.requestId).slice(0, 8)}` : '';
+  const normalizedStatus = String(meta.status || 'ok').toLowerCase();
+  if (normalizedStatus === "error") {
+    statusEl.innerText = `ERROR${requestTag}`;
     statusEl.className = "text-red-300 border border-red-400/40 bg-red-500/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest";
-  } else if (meta.status === "fallback") {
-    statusEl.innerText = "FALLBACK MODE";
+  } else if (normalizedStatus === "fallback" || normalizedStatus === "api_error" || normalizedStatus === "in_progress" || normalizedStatus === "resolved") {
+    statusEl.innerText = `FALLBACK MODE${requestTag}`;
     statusEl.className = "text-amber-300 border border-amber-400/30 bg-amber-500/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest";
   } else {
-    statusEl.innerText = "RESOLVED";
+    statusEl.innerText = `RESOLVED${requestTag}`;
     statusEl.className = "text-neonCyan border border-neonCyan/30 bg-neonCyan/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest glow-cyan";
   }
   

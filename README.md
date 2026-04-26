@@ -1,10 +1,5 @@
 ---
 title: ClusterFix
-emoji: 🚀
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
 ---
 # 🚀 ClusterFix: Autonomous AIOps with RL and TEE Sandboxing
 

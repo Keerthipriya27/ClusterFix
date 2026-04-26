@@ -1,0 +1,30 @@
+# Benchmark Results (20 Curated Tickets)
+
+- Total tickets: 20
+- Positive reward runs: 16
+- Negative reward runs: 4
+- Zero/mixed runs: 0
+- Average reward: 8.85
+
+| id | category | status | total_reward | score_band | final_outcome | confidence |
+|---|---|---|---:|---|---|---:|
+| B001 | infrastructure | ok | 41 | strong_positive | resolved | 0.68 |
+| B002 | database | resolved | 8 | positive | in_progress | 0.15 |
+| B003 | configuration | ok | 41 | strong_positive | resolved | 0.68 |
+| B004 | application | ok | 41 | strong_positive | resolved | 0.56 |
+| B005 | network | ok | 38 | strong_positive | resolved | 0.68 |
+| B006 | configuration | ok | 35 | strong_positive | resolved | 0.32 |
+| B007 | infrastructure | ok | 41 | strong_positive | resolved | 0.68 |
+| B008 | configuration | ok | 41 | strong_positive | resolved | 0.68 |
+| B009 | network | ok | 38 | strong_positive | resolved | 0.56 |
+| B010 | application | ok | 41 | strong_positive | resolved | 0.68 |
+| B011 | network | resolved | -90 | negative | rejected_payload | 0.44 |
+| B012 | network | resolved | -90 | negative | rejected_payload | 0.32 |
+| B013 | configuration | resolved | -87 | negative | rejected_payload | 0.44 |
+| B014 | infrastructure | resolved | -87 | negative | rejected_payload | 0.15 |
+| B015 | application | resolved | 4 | mixed | in_progress | 0.32 |
+| B016 | infrastructure | resolved | 4 | mixed | in_progress | 0.15 |
+| B017 | network | ok | 38 | strong_positive | resolved | 0.68 |
+| B018 | configuration | ok | 41 | strong_positive | resolved | 0.8 |
+| B019 | infrastructure | ok | 41 | strong_positive | resolved | 0.68 |
+| B020 | network | ok | 38 | strong_positive | resolved | 0.68 |

@@ -423,10 +423,12 @@ class TicketEnv(Environment):
             "relevance_score": self.relevance_score,
         }
 
-        # Harmful actions receive a larger penalty.
-        if content in self.current_scenario.harmful_actions or action_name in self.current_scenario.harmful_actions:
-            reward -= 10.0
-            info["outcome"] = "harmful_action"
+        harmful_catalog = set(self.current_scenario.harmful_actions).union(GENERIC_HARMFUL_ACTIONS)
+
+        # Harmful actions receive a TEE sandbox penalty.
+        if content in harmful_catalog or action_name in harmful_catalog:
+            reward -= 50.0  # TEE sandbox rejection penalty
+            info["outcome"] = "rejected_payload"
         elif action_name not in ALL_ACTIONS:
             reward -= 5.0
             info["outcome"] = "wrong_action"
@@ -448,9 +450,9 @@ class TicketEnv(Environment):
                 self.proposed_fix = content
                 if content == self.current_scenario.fix:
                     info["outcome"] = "fix_proposal_correct"
-                elif content in self.current_scenario.harmful_actions:
-                    reward -= 10.0
-                    info["outcome"] = "harmful_fix_proposal"
+                elif content in harmful_catalog:
+                    reward -= 50.0  # TEE penalty for proposing harmful fix
+                    info["outcome"] = "rejected_payload"
                 else:
                     reward -= 5.0
                     info["outcome"] = "fix_proposal_incorrect"
@@ -459,9 +461,9 @@ class TicketEnv(Environment):
             if not candidate_fix:
                 reward -= 5.0
                 info["outcome"] = "no_fix_to_execute"
-            elif candidate_fix in self.current_scenario.harmful_actions:
-                reward -= 10.0
-                info["outcome"] = "harmful_execution"
+            elif candidate_fix in harmful_catalog:
+                reward -= 50.0  # TEE sandbox rejection penalty
+                info["outcome"] = "rejected_payload"
             elif candidate_fix == self.current_scenario.fix:
                 reward += 20.0  # Correct fix reward.
                 self.solved = True

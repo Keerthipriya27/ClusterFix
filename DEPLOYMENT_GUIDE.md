@@ -79,7 +79,7 @@ git push -u origin main
 2. Click **Create New Space**
 3. **Owner:** Your username
 4. **Space Name:** `autoopsenv`
-5. **License:** MIT (or your choice)
+5. **License:** MIT
 6. **SDK:** Gradio
 7. **Space Visibility:** Public
 8. Click **Create Space**
