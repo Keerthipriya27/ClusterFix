@@ -24,11 +24,22 @@ function buildApiUrlCandidates(path) {
   const candidates = [
     `/api/${suffix}`,
     `api/${suffix}`,
+    `./api/${suffix}`,
+    `/proxy/7860/api/${suffix}`,
   ];
 
   const basePath = String(window.location.pathname || '').replace(/\/+$/, '');
   if (basePath && basePath !== '/') {
     candidates.push(`${basePath}/api/${suffix}`);
+    candidates.push(`${basePath}/+/api/${suffix}`);
+  }
+
+  // Hugging Face Spaces hosted path format: /spaces/<owner>/<space>
+  const parts = basePath.split('/').filter(Boolean);
+  if (parts.length >= 3 && parts[0] === 'spaces') {
+    const root = `/${parts[0]}/${parts[1]}/${parts[2]}`;
+    candidates.push(`${root}/api/${suffix}`);
+    candidates.push(`${root}/+/api/${suffix}`);
   }
 
   return [...new Set(candidates)];
@@ -40,7 +51,7 @@ async function fetchApi(path, options = {}) {
   for (const url of buildApiUrlCandidates(path)) {
     try {
       const res = await fetch(url, options);
-      if (res.status === 404 || res.status === 405) {
+      if (res.status === 404 || res.status === 405 || res.status === 502 || res.status === 503) {
         lastError = new Error(`API candidate ${url} returned ${res.status}`);
         continue;
       }
