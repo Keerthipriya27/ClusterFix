@@ -2,9 +2,9 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install only runtime dependencies for Space serving.
+COPY requirements-space.txt .
+RUN pip install --no-cache-dir -r requirements-space.txt
 
 # Copy all project files
 COPY . .

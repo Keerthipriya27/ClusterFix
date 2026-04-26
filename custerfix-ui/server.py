@@ -886,6 +886,7 @@ Adjust response strictly based on given data.
     return jsonify(dynamic_payload)
 
 if __name__ == '__main__':
-    print("Starting ClusterFix RAG Backend on port 7860...")
+    port = int(os.environ.get("PORT", "7860"))
+    print(f"Starting ClusterFix RAG Backend on port {port}...")
     print("For full dynamic AI capability, set GEMINI_API_KEY in your environment.")
-    app.run(host="0.0.0.0", port=7860)
+    app.run(host="0.0.0.0", port=port)

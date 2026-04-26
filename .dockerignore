@@ -6,3 +6,10 @@ __pycache__/
 venv/
 .git/
 .gitignore
+tests/
+benchmarks/
+artifacts/
+data/
+train.ipynb
+*.png
+*.csv
