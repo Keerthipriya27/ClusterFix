@@ -1,2 +1,12 @@
 flask
 requests
+gradio
+numpy
+pandas
+torch
+matplotlib
+pyyaml
+accelerate
+datasets
+transformers
+trl
