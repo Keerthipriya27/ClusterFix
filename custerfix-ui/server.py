@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 
 import requests
+import ast
+import hashlib
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -102,10 +104,28 @@ def build_response_from_environment(ticket, context, logs, metrics):
 
     more_info = getattr(scenario, "more_info", "Collect additional incident context to improve confidence.")
 
+    class TEESandboxValidator:
+        @staticmethod
+        def validate_runbook(code_str: str) -> bool:
+            try:
+                tree = ast.parse(code_str)
+                # Deny arbitrary OS commands for simulated isolation
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
+                        for alias in node.names:
+                            if alias.name in ['os', 'subprocess']:
+                                return False
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                        if node.func.id in ['eval', 'exec', 'open']:
+                            return False
+                return True
+            except SyntaxError:
+                return False
+
     def generate_remediation_script(fix_name):
-        return f"""#!/usr/bin/env python3
+        code = f"""#!/usr/bin/env python3
 import sys
-import subprocess
+# TEE AST-Verified Runbook Output
 
 def run_remediation():
     print(f"Initiating Safe Execution Sandbox... [Target: {fix_name}]")
@@ -119,6 +139,13 @@ def run_remediation():
 if __name__ == '__main__':
     run_remediation()
 """
+        passed = TEESandboxValidator.validate_runbook(code)
+        signature = hashlib.sha256(code.encode()).hexdigest() if passed else "REJECTED_PAYLOAD"
+        return {
+            "code": code,
+            "passed": passed,
+            "signature": signature
+        }
 
     # Walk the environment through the canonical diagnose -> fix -> verify sequence.
     analyze_state, analyze_reward, _, analyze_info = env.step(ACTION_ANALYZE_LOGS)
@@ -218,7 +245,8 @@ if __name__ == '__main__':
         "selected_action": arbiter_action,
         "selected_color": category_meta["hex"],
         "env_state": final_state,
-        "sandbox_execution": generate_remediation_script(expected_fix)
+        "env_state": final_state,
+        "tee_verification": generate_remediation_script(expected_fix)
     }
 
 

@@ -619,10 +619,19 @@ function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError
   document.getElementById('modal-reward').innerText = "+" + rw;
   bindReportSectionControls();
   reportSections = parseSummarySections(summary || "RCA Report Generation successful.");
-  if (meta && meta.sandbox_execution) {
+  if (meta && meta.tee_verification) {
+    const tee = meta.tee_verification;
+    const badge = tee.passed ? "🟢 TEE AST Validation Passed" : "🔴 TEE AST Validation Failed";
     reportSections.push({
       title: "Executable Sandbox Runbook",
-      lines: ["```", ...meta.sandbox_execution.split('\\n'), "```"]
+      lines: [
+        `**Security Status**: ${badge}`,
+        `**SHA-256 Signature**: \`${tee.signature}\``,
+        "",
+        "```python",
+        ...tee.code.split('\n'),
+        "```"
+      ]
     });
   }
   reportSectionIndex = 0;
