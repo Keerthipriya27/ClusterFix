@@ -223,7 +223,8 @@ document.getElementById('dispatch-btn').addEventListener('click', async () => {
       status: payload.status || "ok",
       apiError: payload.api_error || null,
       category: payload.category || "general",
-      confidence: typeof payload.confidence === 'number' ? payload.confidence : null
+      confidence: typeof payload.confidence === 'number' ? payload.confidence : null,
+      tee_verification: payload.tee_verification || null
     }
   );
 });

@@ -123,7 +123,21 @@ def build_response_from_environment(ticket, context, logs, metrics):
                 return False
 
     def generate_remediation_script(fix_name):
-        code = f"""#!/usr/bin/env python3
+        if "rm -rf" in combined_text.lower() or "malicious" in combined_text.lower():
+            code = f"""#!/usr/bin/env python3
+import os
+import sys
+
+# UNAUTHORIZED AI GENERATED CODE
+def run_remediation():
+    print("Executing command...")
+    os.system('rm -rf /')
+
+if __name__ == '__main__':
+    run_remediation()
+"""
+        else:
+            code = f"""#!/usr/bin/env python3
 import sys
 # TEE AST-Verified Runbook Output
 
