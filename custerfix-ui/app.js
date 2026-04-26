@@ -19,6 +19,40 @@ let sceneZoom = SCENE_ZOOM_DEFAULT;
 let reportSections = [];
 let reportSectionIndex = 0;
 
+function buildApiUrlCandidates(path) {
+  const suffix = String(path || '').replace(/^\/+/, '');
+  const candidates = [
+    `/api/${suffix}`,
+    `api/${suffix}`,
+  ];
+
+  const basePath = String(window.location.pathname || '').replace(/\/+$/, '');
+  if (basePath && basePath !== '/') {
+    candidates.push(`${basePath}/api/${suffix}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+async function fetchApi(path, options = {}) {
+  let lastError = null;
+
+  for (const url of buildApiUrlCandidates(path)) {
+    try {
+      const res = await fetch(url, options);
+      if (res.status === 404 || res.status === 405) {
+        lastError = new Error(`API candidate ${url} returned ${res.status}`);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Unable to reach API endpoint');
+}
+
 // --- PAGE WIZARD ---
 window.goToPage = function(num) {
   const p3d = document.getElementById('panel-3d');
@@ -195,7 +229,7 @@ document.getElementById('dispatch-btn').addEventListener('click', async () => {
 
   let payload;
   try {
-    const res = await fetch('/api/solve', {
+    const res = await fetchApi('solve', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ticket: input, context: context, logs: logs, metrics: metrics })
@@ -715,9 +749,12 @@ function showReportModal(rw, summary, chartData, meta = { status: "ok", apiError
   if (normalizedStatus === "error") {
     statusEl.innerText = `ERROR${requestTag}`;
     statusEl.className = "text-red-300 border border-red-400/40 bg-red-500/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest";
-  } else if (normalizedStatus === "fallback" || normalizedStatus === "api_error" || normalizedStatus === "in_progress" || normalizedStatus === "resolved") {
+  } else if (normalizedStatus === "fallback" || normalizedStatus === "api_error") {
     statusEl.innerText = `FALLBACK MODE${requestTag}`;
     statusEl.className = "text-amber-300 border border-amber-400/30 bg-amber-500/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest";
+  } else if (normalizedStatus === "in_progress") {
+    statusEl.innerText = `ANALYZING${requestTag}`;
+    statusEl.className = "text-sky-300 border border-sky-400/30 bg-sky-500/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest";
   } else {
     statusEl.innerText = `RESOLVED${requestTag}`;
     statusEl.className = "text-neonCyan border border-neonCyan/30 bg-neonCyan/10 px-4 py-1 rounded font-mono font-bold uppercase tracking-widest glow-cyan";
@@ -1315,7 +1352,7 @@ setInterval(async () => {
     if (isSimulationRunning) return; // Don't interrupt active processes
     
     try {
-        const res = await fetch('/api/alerts/poll');
+      const res = await fetchApi('alerts/poll');
         const data = await res.json();
         
         if (data.has_alert && data.alert) {
