@@ -1,5 +1,11 @@
 ---
 title: ClusterFix
+emoji: "🚀"
+colorFrom: blue
+colorTo: green
+sdk: gradio
+app_file: app.py
+pinned: false
 ---
 # 🚀 ClusterFix: Autonomous AIOps with RL and TEE Sandboxing
 
