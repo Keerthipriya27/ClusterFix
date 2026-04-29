@@ -7,7 +7,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 ---
-# 🚀 ClusterFix: Autonomous AIOps with RL and TEE Sandboxing
+# 🚀 ClusterFix: Autonomous AIOps  with RL and TEE Sandboxing
 
 Welcome to **ClusterFix**, an advanced, autonomous IT Incident Responder designed to eliminate alert fatigue. By combining **Multi-Agent Reinforcement Learning**, **Large Language Models (Gemini 1.5)**, and a strict **Software Trusted Execution Environment (TEE)**, ClusterFix can safely diagnose, triage, and execute remediation scripts for enterprise server crashes without human intervention.
 
