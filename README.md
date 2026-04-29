@@ -11,7 +11,7 @@ pinned: false
 
 Welcome to **ClusterFix**, an advanced, autonomous IT Incident Responder designed to eliminate alert fatigue. By combining **Multi-Agent Reinforcement Learning**, **Large Language Models (Gemini 1.5)**, and a strict **Software Trusted Execution Environment (TEE)**, ClusterFix can safely diagnose, triage, and execute remediation scripts for enterprise server crashes without human intervention.
 
-## 🎯 Hackathon Submission Deliverables
+## 🎯 Hackathon Submission  Deliverables
 *⚠️ **EVALUATORS:** All required submission links are provided below:*
 
 - **💻 Code Repository Link:** [https://github.com/Keerthipriya27/ClusterFix](https://github.com/Keerthipriya27/ClusterFix)
